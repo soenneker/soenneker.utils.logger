@@ -42,6 +42,6 @@
         <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1" PrivateAssets="All" />
         <PackageReference Include="Serilog" Version="3.0.1" />
         <PackageReference Include="Serilog.Extensions.Logging" Version="7.0.0" />
-        <PackageReference Include="Soenneker.Extensions.String" Version="1.0.129" />
+        <PackageReference Include="Soenneker.Extensions.String" Version="1.0.133" />
     </ItemGroup>
 </Project>
