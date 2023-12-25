@@ -8,5 +8,5 @@
 ## Installation
 
 ```
-Install-Package Soenneker.Utils.Logger
+dotnet add package Soenneker.Utils.Logger
 ```
