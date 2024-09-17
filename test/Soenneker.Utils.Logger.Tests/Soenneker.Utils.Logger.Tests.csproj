@@ -22,7 +22,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\src\Soenneker.Utils.Logger.csproj" />
+        <ProjectReference Include="..\..\src\Soenneker.Utils.Logger.csproj" />
     </ItemGroup>
 
 </Project>
