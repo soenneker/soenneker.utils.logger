@@ -5,7 +5,7 @@ using Serilog;
 using Serilog.Core;
 using Serilog.Events;
 using Serilog.Extensions.Logging;
-using Soenneker.Extensions.String;
+using Soenneker.Extensions.Configuration.Logging;
 
 namespace Soenneker.Utils.Logger;
 
@@ -27,9 +27,7 @@ public static class LoggerUtil
     /// </summary>
     public static ILogger<T> BuildLogger<T>()
     {
-        ILogger<T> logger = new SerilogLoggerFactory(Log.Logger).CreateLogger<T>();
-
-        return logger;
+        return new SerilogLoggerFactory(Log.Logger).CreateLogger<T>();
     }
 
     public static LoggingLevelSwitch GetSwitch()
@@ -40,29 +38,9 @@ public static class LoggerUtil
         return _loggingLevelSwitch;
     }
 
-    public static LogEventLevel GetLogEventLevelFromConfigRoot(IConfigurationRoot configRoot)
+    public static LogEventLevel SetLogLevelFromConfig(IConfiguration config)
     {
-        LogEventLevel? logEventLevel = configRoot.GetValue<string>("Log:DefaultLogLevel").TryToEnum<LogEventLevel>();
-
-        if (logEventLevel == null)
-            logEventLevel = LogEventLevel.Verbose;
-
-        return logEventLevel.Value;
-    }
-
-    public static LogEventLevel GetLogEventLevelFromConfig(IConfiguration config)
-    {
-        LogEventLevel? logEventLevel = config["Log:Levels:Default"].TryToEnum<LogEventLevel>();
-
-        if (logEventLevel == null)
-            logEventLevel = LogEventLevel.Verbose;
-
-        return logEventLevel.Value;
-    }
-
-    public static LogEventLevel SetLogLevelFromConfigRoot(IConfigurationRoot configRoot)
-    {
-        LogEventLevel switchLevel = GetLogEventLevelFromConfigRoot(configRoot);
+        LogEventLevel switchLevel = config.GetLogEventLevel();
 
         return SetLogLevel(switchLevel);
     }
