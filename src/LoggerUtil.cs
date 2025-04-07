@@ -50,6 +50,16 @@ public static class LoggerUtil
         return logEventLevel.Value;
     }
 
+    public static LogEventLevel GetLogEventLevelFromConfig(IConfiguration config)
+    {
+        LogEventLevel? logEventLevel = config["Log:Levels:Default"].TryToEnum<LogEventLevel>();
+
+        if (logEventLevel == null)
+            logEventLevel = LogEventLevel.Verbose;
+
+        return logEventLevel.Value;
+    }
+
     public static LogEventLevel SetLogLevelFromConfigRoot(IConfigurationRoot configRoot)
     {
         LogEventLevel switchLevel = GetLogEventLevelFromConfigRoot(configRoot);
