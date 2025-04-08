@@ -39,6 +39,6 @@
         
         <PackageReference Include="Serilog.Extensions.Logging" Version="9.0.1" />
         <PackageReference Include="Soenneker.Extensions.Configuration" Version="3.0.667" />
-        <PackageReference Include="Soenneker.Extensions.Configuration.Logging" Version="3.0.2" />
+        <PackageReference Include="Soenneker.Extensions.Configuration.Logging" Version="3.0.3" />
     </ItemGroup>
 </Project>
