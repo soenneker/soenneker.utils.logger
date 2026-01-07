@@ -38,6 +38,6 @@
         <None Include="..\icon.png" Pack="true" PackagePath="\" />
         
         <PackageReference Include="Serilog.Extensions.Logging" Version="10.0.0" />
-        <PackageReference Include="Soenneker.Extensions.Configuration.Logging" Version="4.0.86" />
+        <PackageReference Include="Soenneker.Extensions.Configuration.Logging" Version="4.0.87" />
     </ItemGroup>
 </Project>
