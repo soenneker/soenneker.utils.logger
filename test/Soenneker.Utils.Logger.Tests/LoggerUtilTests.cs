@@ -1,10 +1,9 @@
-using Xunit;
 
 namespace Soenneker.Utils.Logger.Tests;
 
 public class LoggerUtilTests 
 {
-    [Fact]
+    [Test]
     public void Default()
     {
 
