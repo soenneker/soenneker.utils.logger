@@ -21,7 +21,6 @@ namespace Soenneker.Utils.Logger;
 ///
 /// <para>
 /// Initialization is performed exactly once using reference publication under a lock.
-/// After initialization, all hot paths are lock-free and allocation-free.
 /// </para>
 ///
 /// <para>
@@ -46,13 +45,12 @@ public static class LoggerUtil
     /// <para>
     /// Initialization state is determined by reference publication
     /// (i.e. <see cref="_factory"/> being non-null), which is safely published
-    /// via a lock. No volatile or atomic operations are required.
+    /// with volatile reads and writes around the locked initialization.
     /// </para>
     /// </remarks>
     public static void Init()
     {
-        // Fast path: already initialized
-        if (_factory is not null)
+        if (Volatile.Read(ref _factory) is not null)
             return;
 
         lock (_initLock)
@@ -60,8 +58,8 @@ public static class LoggerUtil
             if (_factory is not null)
                 return;
 
-            _loggingLevelSwitch = new LoggingLevelSwitch(LogEventLevel.Verbose);
-            _factory = new SerilogLoggerFactory(Log.Logger, dispose: false);
+            _loggingLevelSwitch ??= new LoggingLevelSwitch(LogEventLevel.Verbose);
+            Volatile.Write(ref _factory, new SerilogLoggerFactory(Log.Logger, dispose: false));
         }
     }
 
@@ -79,12 +77,12 @@ public static class LoggerUtil
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ILogger<T> BuildLogger<T>()
     {
-        SerilogLoggerFactory? factory = _factory;
+        SerilogLoggerFactory? factory = Volatile.Read(ref _factory);
 
         if (factory is null)
         {
             Init();
-            factory = _factory!;
+            factory = Volatile.Read(ref _factory)!;
         }
 
         return factory.CreateLogger<T>();
@@ -101,12 +99,20 @@ public static class LoggerUtil
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static LoggingLevelSwitch GetSwitch()
     {
-        LoggingLevelSwitch? sw = _loggingLevelSwitch;
+        LoggingLevelSwitch? sw = Volatile.Read(ref _loggingLevelSwitch);
 
         if (sw is null)
         {
-            Init();
-            sw = _loggingLevelSwitch!;
+            lock (_initLock)
+            {
+                sw = _loggingLevelSwitch;
+
+                if (sw is null)
+                {
+                    sw = new LoggingLevelSwitch(LogEventLevel.Verbose);
+                    Volatile.Write(ref _loggingLevelSwitch, sw);
+                }
+            }
         }
 
         return sw;
@@ -131,8 +137,8 @@ public static class LoggerUtil
     /// <param name="logEventLevel">The minimum log level to apply.</param>
     /// <returns>The applied <see cref="LogEventLevel"/>.</returns>
     /// <remarks>
-    /// Changing the log level affects all loggers created from this utility
-    /// immediately.
+    /// Changing the log level affects loggers whose Serilog pipeline was configured
+    /// with the shared switch returned by <see cref="GetSwitch"/>.
     /// </remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static LogEventLevel SetLogLevel(LogEventLevel logEventLevel)

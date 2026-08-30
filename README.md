@@ -20,10 +20,40 @@ using Soenneker.Utils.Logger;
 
 Call the static `LoggerUtil` methods directly; no dependency-injection registration is required.
 
-## Common operations
+## Configure Serilog before creating loggers
 
-- `Init()` - Ensures the logging infrastructure is initialized. This method is safe to call multiple times and from multiple threads.
-- `BuildLogger()` - Creates `ILogger<T>` through a cached `SerilogLoggerFactory`.
-- `GetSwitch()` - Gets the shared `LoggingLevelSwitch` instance. Returns the initialized `LoggingLevelSwitch`.
-- `SetLogLevelFromConfig()` - Resolves and applies the minimum log level from configuration. Returns the resolved `LogEventLevel`.
-- `SetLogLevel()` - Sets the minimum log level on the shared `LoggingLevelSwitch`. Returns the applied `LogEventLevel`. Changing the log level affects all loggers created from this utility immediately.
+```csharp
+using Microsoft.Extensions.Logging;
+using Serilog;
+using Serilog.Core;
+using Soenneker.Utils.Logger;
+
+LoggingLevelSwitch levelSwitch = LoggerUtil.GetSwitch();
+
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.ControlledBy(levelSwitch)
+    .WriteTo.Console()
+    .CreateLogger();
+
+ILogger<Worker> logger = LoggerUtil.BuildLogger<Worker>();
+```
+
+The console call requires the corresponding Serilog sink package. Configure `Log.Logger` before
+the first call to `BuildLogger` or `Init`: the utility's factory captures that logger and does not
+own or dispose it. Application shutdown remains responsible for flushing and closing Serilog.
+
+## Change the level at runtime
+
+```csharp
+LoggerUtil.SetLogLevel(LogEventLevel.Warning);
+
+// Or resolve the configured level through Soenneker's configuration logging extension:
+LoggerUtil.SetLogLevelFromConfig(configuration);
+```
+
+Level changes affect a logger only when its Serilog configuration uses the shared switch returned
+by `GetSwitch`, as in the setup above. The switch begins at `Verbose`; sinks and additional Serilog
+overrides can still filter events more restrictively.
+
+`BuildLogger<T>` creates a Microsoft `ILogger<T>` with category `T` through the cached factory.
+`Init` is optional because `BuildLogger` initializes the factory on first use.
