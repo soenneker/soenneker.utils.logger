@@ -35,6 +35,12 @@ public static class LoggerUtil
     private static LoggingLevelSwitch? _loggingLevelSwitch;
     private static SerilogLoggerFactory? _factory;
 
+    private static class TypedLoggerCache<T>
+    {
+        internal static ILogger<T>? Instance;
+    }
+
+
     /// <summary>
     /// Ensures the logging infrastructure is initialized.
     /// </summary>
@@ -64,19 +70,22 @@ public static class LoggerUtil
     }
 
     /// <summary>
-    /// Creates a Microsoft <see cref="ILogger{T}"/> using the cached
+    /// Gets a shared Microsoft <see cref="ILogger{T}"/> using the cached
     /// <see cref="SerilogLoggerFactory"/>.
     /// </summary>
     /// <typeparam name="T">The category type for the logger.</typeparam>
     /// <returns>An <see cref="ILogger{T}"/> instance.</returns>
     /// <remarks>
     /// This method is optimized for the steady state:
-    /// after initialization, it performs only a single reference read
-    /// and a logger creation call.
+    /// after the category is initialized, it returns its cached logger.
     /// </remarks>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static ILogger<T> BuildLogger<T>()
     {
+        ILogger<T>? cached = Volatile.Read(ref TypedLoggerCache<T>.Instance);
+        if (cached is not null)
+            return cached;
+
         SerilogLoggerFactory? factory = Volatile.Read(ref _factory);
 
         if (factory is null)
@@ -85,7 +94,8 @@ public static class LoggerUtil
             factory = Volatile.Read(ref _factory)!;
         }
 
-        return factory.CreateLogger<T>();
+        ILogger<T> created = factory.CreateLogger<T>();
+        return Interlocked.CompareExchange(ref TypedLoggerCache<T>.Instance, created, null) ?? created;
     }
 
     /// <summary>
