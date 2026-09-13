@@ -44,6 +44,6 @@
     <ItemGroup>
         <PackageReference Include="Serilog.Extensions.Logging" Version="10.0.0" />
         <PackageReference Include="Soenneker.Atomics.ValueBools" Version="4.0.41" />
-        <PackageReference Include="Soenneker.Extensions.Configuration.Logging" Version="4.0.227" />
+        <PackageReference Include="Soenneker.Extensions.Configuration.Logging" Version="4.0.228" />
     </ItemGroup>
 </Project>
